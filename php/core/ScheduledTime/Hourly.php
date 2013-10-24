@@ -1,11 +1,10 @@
 <?php
 /**
  * Piwik - Open source web analytics
- * 
+ *
  * @link http://piwik.org
  * @license http://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
- * @version $Id: Hourly.php 3364 2010-11-25 22:38:40Z JulienM $
- * 
+ *
  * @category Piwik
  * @package Piwik
  */
@@ -19,28 +18,28 @@
  */
 class Piwik_ScheduledTime_Hourly extends Piwik_ScheduledTime
 {
-	public function getRescheduledTime()
-	{
-		$currentTime = $this->getTime();
-		
-		// Adds one hour and reset the number of minutes
-		$rescheduledTime = mktime ( 	date('H', $currentTime) + 1, 
-									0, 
-									date('s', $currentTime),
-									date('n', $currentTime),
-									date('j', $currentTime),
-									date('Y', $currentTime)
-									);
-		return $rescheduledTime;
-	}
+    public function getRescheduledTime()
+    {
+        $currentTime = $this->getTime();
 
-	public function setHour($_hour)
-	{
-		throw new Exception ("Method not supported");
-	}
-	
-	public function setDay($_day)
-	{
-		throw new Exception ("Method not supported");
-	}
+        // Adds one hour and reset the number of minutes
+        $rescheduledTime = mktime(date('H', $currentTime) + 1,
+            0,
+            date('s', $currentTime),
+            date('n', $currentTime),
+            date('j', $currentTime),
+            date('Y', $currentTime)
+        );
+        return $rescheduledTime;
+    }
+
+    public function setHour($_hour)
+    {
+        throw new Exception ("Method not supported");
+    }
+
+    public function setDay($_day)
+    {
+        throw new Exception ("Method not supported");
+    }
 }

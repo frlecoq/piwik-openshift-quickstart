@@ -1,11 +1,10 @@
 <?php
 /**
  * Piwik - Open source web analytics
- * 
+ *
  * @link http://piwik.org
  * @license http://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
- * @version $Id: Daily.php 3387 2010-11-29 14:38:13Z JulienM $
- * 
+ *
  * @category Piwik
  * @package Piwik
  */
@@ -18,28 +17,28 @@
  * @subpackage Piwik_ScheduledTime
  */
 class Piwik_ScheduledTime_Daily extends Piwik_ScheduledTime
-{	
-	public function getRescheduledTime()
-	{
-		$currentTime = $this->getTime();
-		
-		// Add one day
-		$rescheduledTime = mktime ( date('H', $currentTime),
-									date('i', $currentTime),
-									date('s', $currentTime),
-									date('n', $currentTime),
-									date('j', $currentTime) + 1,
-									date('Y', $currentTime)
-									);
+{
+    public function getRescheduledTime()
+    {
+        $currentTime = $this->getTime();
 
-		// Adjusts the scheduled hour
-		$rescheduledTime = $this->adjustHour($rescheduledTime);
+        // Add one day
+        $rescheduledTime = mktime(date('H', $currentTime),
+            date('i', $currentTime),
+            date('s', $currentTime),
+            date('n', $currentTime),
+            date('j', $currentTime) + 1,
+            date('Y', $currentTime)
+        );
 
-		return $rescheduledTime;
-	}
-	
-	public function setDay($_day)
-	{
-		throw new Exception ("Method not supported");
-	}
+        // Adjusts the scheduled hour
+        $rescheduledTime = $this->adjustHour($rescheduledTime);
+
+        return $rescheduledTime;
+    }
+
+    public function setDay($_day)
+    {
+        throw new Exception ("Method not supported");
+    }
 }

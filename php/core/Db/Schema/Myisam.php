@@ -4,7 +4,6 @@
  *
  * @link http://piwik.org
  * @license http://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
- * @version $Id: Myisam.php 4763 2011-05-22 16:28:36Z vipsoft $
  *
  * @category Piwik
  * @package Piwik
@@ -18,45 +17,44 @@
  */
 class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 {
-	/**
-	 * Is this MySQL storage engine available?
-	 *
-	 * @param string $engineName
-	 * @return bool True if available and enabled; false otherwise
-	 */
-	static private function hasStorageEngine($engineName)
-	{
-		$db = Zend_Registry::get('db');
-		$allEngines = $db->fetchAssoc('SHOW ENGINES');
-		if(key_exists($engineName, $allEngines))
-		{
-			$support = $allEngines[$engineName]['Support'];
-			return $support == 'DEFAULT' || $support == 'YES';
-		}
-		return false;
-	}
+    /**
+     * Is this MySQL storage engine available?
+     *
+     * @param string $engineName
+     * @return bool  True if available and enabled; false otherwise
+     */
+    static private function hasStorageEngine($engineName)
+    {
+        $db = Zend_Registry::get('db');
+        $allEngines = $db->fetchAssoc('SHOW ENGINES');
+        if (array_key_exists($engineName, $allEngines)) {
+            $support = $allEngines[$engineName]['Support'];
+            return $support == 'DEFAULT' || $support == 'YES';
+        }
+        return false;
+    }
 
-	/**
-	 * Is this schema available?
-	 *
-	 * @return bool True if schema is available; false otherwise
-	 */
-	static public function isAvailable()
-	{
-		return self::hasStorageEngine('MyISAM');
-	}
+    /**
+     * Is this schema available?
+     *
+     * @return bool  True if schema is available; false otherwise
+     */
+    static public function isAvailable()
+    {
+        return self::hasStorageEngine('MyISAM');
+    }
 
-	/**
-	 * Get the SQL to create Piwik tables
-	 *
-	 * @return array of strings containing SQL
-	 */
-	public function getTablesCreateSql()
-	{
-		$config = Zend_Registry::get('config');
-		$prefixTables = $config->database->tables_prefix;
-		$tables = array(
-			'user' => "CREATE TABLE {$prefixTables}user (
+    /**
+     * Get the SQL to create Piwik tables
+     *
+     * @return array  array of strings containing SQL
+     */
+    public function getTablesCreateSql()
+    {
+        $config = Piwik_Config::getInstance();
+        $prefixTables = $config->database['tables_prefix'];
+        $tables = array(
+            'user'                  => "CREATE TABLE {$prefixTables}user (
 						  login VARCHAR(100) NOT NULL,
 						  password CHAR(32) NOT NULL,
 						  alias VARCHAR(45) NOT NULL,
@@ -68,7 +66,7 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 						)  DEFAULT CHARSET=utf8
 			",
 
-			'access' => "CREATE TABLE {$prefixTables}access (
+            'access'                => "CREATE TABLE {$prefixTables}access (
 						  login VARCHAR(100) NOT NULL,
 						  idsite INTEGER UNSIGNED NOT NULL,
 						  access VARCHAR(10) NULL,
@@ -76,29 +74,34 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 						)  DEFAULT CHARSET=utf8
 			",
 
-			'site' => "CREATE TABLE {$prefixTables}site (
+            'site'                  => "CREATE TABLE {$prefixTables}site (
 						  idsite INTEGER(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 						  name VARCHAR(90) NOT NULL,
 						  main_url VARCHAR(255) NOT NULL,
   						  ts_created TIMESTAMP NULL,
   						  ecommerce TINYINT DEFAULT 0,
+  						  sitesearch TINYINT DEFAULT 1,
+  						  sitesearch_keyword_parameters TEXT NOT NULL,
+  						  sitesearch_category_parameters TEXT NOT NULL,
   						  timezone VARCHAR( 50 ) NOT NULL,
   						  currency CHAR( 3 ) NOT NULL,
   						  excluded_ips TEXT NOT NULL,
-  						  excluded_parameters VARCHAR ( 255 ) NOT NULL,
+  						  excluded_parameters TEXT NOT NULL,
+  						  excluded_user_agents TEXT NOT NULL,
   						  `group` VARCHAR(250) NOT NULL, 
+  						  keep_url_fragment TINYINT NOT NULL DEFAULT 0,
 						  PRIMARY KEY(idsite)
 						)  DEFAULT CHARSET=utf8
 			",
 
-			'site_url' => "CREATE TABLE {$prefixTables}site_url (
+            'site_url'              => "CREATE TABLE {$prefixTables}site_url (
 							  idsite INTEGER(10) UNSIGNED NOT NULL,
 							  url VARCHAR(255) NOT NULL,
 							  PRIMARY KEY(idsite, url)
 						)  DEFAULT CHARSET=utf8
 			",
 
-			'goal' => "	CREATE TABLE `{$prefixTables}goal` (
+            'goal'                  => "	CREATE TABLE `{$prefixTables}goal` (
 							  `idsite` int(11) NOT NULL,
 							  `idgoal` int(11) NOT NULL,
 							  `name` varchar(50) NOT NULL,
@@ -113,7 +116,7 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 							)  DEFAULT CHARSET=utf8
 			",
 
-			'logger_message' => "CREATE TABLE {$prefixTables}logger_message (
+            'logger_message'        => "CREATE TABLE {$prefixTables}logger_message (
 									  idlogger_message INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 									  timestamp TIMESTAMP NULL,
 									  message TEXT NULL,
@@ -121,7 +124,7 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 									)  DEFAULT CHARSET=utf8
 			",
 
-			'logger_api_call' => "CREATE TABLE {$prefixTables}logger_api_call (
+            'logger_api_call'       => "CREATE TABLE {$prefixTables}logger_api_call (
 									  idlogger_api_call INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 									  class_name VARCHAR(255) NULL,
 									  method_name VARCHAR(255) NULL,
@@ -135,7 +138,7 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 									)  DEFAULT CHARSET=utf8
 			",
 
-			'logger_error' => "CREATE TABLE {$prefixTables}logger_error (
+            'logger_error'          => "CREATE TABLE {$prefixTables}logger_error (
 									  idlogger_error INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 									  timestamp TIMESTAMP NULL,
 									  message TEXT NULL,
@@ -147,7 +150,7 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 									) DEFAULT CHARSET=utf8
 			",
 
-			'logger_exception' => "CREATE TABLE {$prefixTables}logger_exception (
+            'logger_exception'      => "CREATE TABLE {$prefixTables}logger_exception (
 									  idlogger_exception INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
 									  timestamp TIMESTAMP NULL,
 									  message TEXT NULL,
@@ -159,17 +162,18 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 									)  DEFAULT CHARSET=utf8
 			",
 
-			'log_action' => "CREATE TABLE {$prefixTables}log_action (
+            'log_action'            => "CREATE TABLE {$prefixTables}log_action (
 									  idaction INTEGER(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 									  name TEXT,
 									  hash INTEGER(10) UNSIGNED NOT NULL,
   									  type TINYINT UNSIGNED NULL,
+  									  url_prefix TINYINT(2) NULL,
 									  PRIMARY KEY(idaction),
 									  INDEX index_type_hash (type, hash)
 						)  DEFAULT CHARSET=utf8
 			",
 
-			'log_visit' => "CREATE TABLE {$prefixTables}log_visit (
+            'log_visit'             => "CREATE TABLE {$prefixTables}log_visit (
 							  idvisit INTEGER(10) UNSIGNED NOT NULL AUTO_INCREMENT,
 							  idsite INTEGER(10) UNSIGNED NOT NULL,
 							  idvisitor BINARY(8) NOT NULL,
@@ -181,11 +185,12 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 							  visitor_days_since_first SMALLINT(5) UNSIGNED NOT NULL,
 							  visit_first_action_time DATETIME NOT NULL,
 							  visit_last_action_time DATETIME NOT NULL,
-							  visit_exit_idaction_url INTEGER(11) UNSIGNED NOT NULL,
+							  visit_exit_idaction_url INTEGER(11) UNSIGNED NULL DEFAULT 0,
 							  visit_exit_idaction_name INTEGER(11) UNSIGNED NOT NULL,
 							  visit_entry_idaction_url INTEGER(11) UNSIGNED NOT NULL,
 							  visit_entry_idaction_name INTEGER(11) UNSIGNED NOT NULL,
 							  visit_total_actions SMALLINT(5) UNSIGNED NOT NULL,
+							  visit_total_searches SMALLINT(5) UNSIGNED NOT NULL,
 							  visit_total_time SMALLINT(5) UNSIGNED NOT NULL,
 							  visit_goal_converted TINYINT(1) NOT NULL,
 							  visit_goal_buyer TINYINT(1) NOT NULL, 
@@ -211,25 +216,28 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 							  location_ip VARBINARY(16) NOT NULL,
 							  location_browser_lang VARCHAR(20) NOT NULL,
 							  location_country CHAR(3) NOT NULL,
-							  location_continent CHAR(3) NOT NULL,
-							  custom_var_k1 VARCHAR(100) DEFAULT NULL,
-							  custom_var_v1 VARCHAR(100) DEFAULT NULL,
-							  custom_var_k2 VARCHAR(100) DEFAULT NULL,
-							  custom_var_v2 VARCHAR(100) DEFAULT NULL,
-							  custom_var_k3 VARCHAR(100) DEFAULT NULL,
-							  custom_var_v3 VARCHAR(100) DEFAULT NULL,
-							  custom_var_k4 VARCHAR(100) DEFAULT NULL,
-							  custom_var_v4 VARCHAR(100) DEFAULT NULL,
-							  custom_var_k5 VARCHAR(100) DEFAULT NULL,
-							  custom_var_v5 VARCHAR(100) DEFAULT NULL,
+							  location_region char(2) DEFAULT NULL,
+							  location_city varchar(255) DEFAULT NULL,
+							  location_latitude float(10, 6) DEFAULT NULL,
+							  location_longitude float(10, 6) DEFAULT NULL,
+							  custom_var_k1 VARCHAR(200) DEFAULT NULL,
+							  custom_var_v1 VARCHAR(200) DEFAULT NULL,
+							  custom_var_k2 VARCHAR(200) DEFAULT NULL,
+							  custom_var_v2 VARCHAR(200) DEFAULT NULL,
+							  custom_var_k3 VARCHAR(200) DEFAULT NULL,
+							  custom_var_v3 VARCHAR(200) DEFAULT NULL,
+							  custom_var_k4 VARCHAR(200) DEFAULT NULL,
+							  custom_var_v4 VARCHAR(200) DEFAULT NULL,
+							  custom_var_k5 VARCHAR(200) DEFAULT NULL,
+							  custom_var_v5 VARCHAR(200) DEFAULT NULL,
 							  PRIMARY KEY(idvisit),
 							  INDEX index_idsite_config_datetime (idsite, config_id, visit_last_action_time),
 							  INDEX index_idsite_datetime (idsite, visit_last_action_time),
 							  INDEX index_idsite_idvisitor (idsite, idvisitor)
 							)  DEFAULT CHARSET=utf8
 			",
-		
-			'log_conversion_item' => "CREATE TABLE `{$prefixTables}log_conversion_item` (
+
+            'log_conversion_item'   => "CREATE TABLE `{$prefixTables}log_conversion_item` (
 												  idsite int(10) UNSIGNED NOT NULL,
 										  		  idvisitor BINARY(8) NOT NULL,
 										          server_time DATETIME NOT NULL,
@@ -239,6 +247,10 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 												  idaction_sku INTEGER(10) UNSIGNED NOT NULL,
 												  idaction_name INTEGER(10) UNSIGNED NOT NULL,
 												  idaction_category INTEGER(10) UNSIGNED NOT NULL,
+												  idaction_category2 INTEGER(10) UNSIGNED NOT NULL,
+												  idaction_category3 INTEGER(10) UNSIGNED NOT NULL,
+												  idaction_category4 INTEGER(10) UNSIGNED NOT NULL,
+												  idaction_category5 INTEGER(10) UNSIGNED NOT NULL,
 												  price FLOAT NOT NULL,
 												  quantity INTEGER(10) UNSIGNED NOT NULL,
 												  deleted TINYINT(1) UNSIGNED NOT NULL,
@@ -248,7 +260,7 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 												)  DEFAULT CHARSET=utf8
 			",
 
-			'log_conversion' => "CREATE TABLE `{$prefixTables}log_conversion` (
+            'log_conversion'        => "CREATE TABLE `{$prefixTables}log_conversion` (
 									  idvisit int(10) unsigned NOT NULL,
 									  idsite int(10) unsigned NOT NULL,
 									  idvisitor BINARY(8) NOT NULL,
@@ -264,7 +276,10 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
         							  visitor_days_since_first SMALLINT(5) UNSIGNED NOT NULL,
 							  		  visitor_days_since_order SMALLINT(5) UNSIGNED NOT NULL,
 									  location_country char(3) NOT NULL,
-									  location_continent char(3) NOT NULL,
+									  location_region char(2) DEFAULT NULL,
+									  location_city varchar(255) DEFAULT NULL,
+									  location_latitude float(10, 6) DEFAULT NULL,
+									  location_longitude float(10, 6) DEFAULT NULL,
 									  url text NOT NULL,
 									  idgoal int(10) NOT NULL,
 									  buster int unsigned NOT NULL,
@@ -277,50 +292,51 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 									  revenue_shipping float default NULL,
 									  revenue_discount float default NULL,
         							  
-									  custom_var_k1 VARCHAR(100) DEFAULT NULL,
-        							  custom_var_v1 VARCHAR(100) DEFAULT NULL,
-        							  custom_var_k2 VARCHAR(100) DEFAULT NULL,
-        							  custom_var_v2 VARCHAR(100) DEFAULT NULL,
-        							  custom_var_k3 VARCHAR(100) DEFAULT NULL,
-        							  custom_var_v3 VARCHAR(100) DEFAULT NULL,
-        							  custom_var_k4 VARCHAR(100) DEFAULT NULL,
-        							  custom_var_v4 VARCHAR(100) DEFAULT NULL,
-        							  custom_var_k5 VARCHAR(100) DEFAULT NULL,
-        							  custom_var_v5 VARCHAR(100) DEFAULT NULL,
+									  custom_var_k1 VARCHAR(200) DEFAULT NULL,
+        							  custom_var_v1 VARCHAR(200) DEFAULT NULL,
+        							  custom_var_k2 VARCHAR(200) DEFAULT NULL,
+        							  custom_var_v2 VARCHAR(200) DEFAULT NULL,
+        							  custom_var_k3 VARCHAR(200) DEFAULT NULL,
+        							  custom_var_v3 VARCHAR(200) DEFAULT NULL,
+        							  custom_var_k4 VARCHAR(200) DEFAULT NULL,
+        							  custom_var_v4 VARCHAR(200) DEFAULT NULL,
+        							  custom_var_k5 VARCHAR(200) DEFAULT NULL,
+        							  custom_var_v5 VARCHAR(200) DEFAULT NULL,
 									  PRIMARY KEY (idvisit, idgoal, buster),
 									  UNIQUE KEY unique_idsite_idorder (idsite, idorder),
 									  INDEX index_idsite_datetime ( idsite, server_time )
 									) DEFAULT CHARSET=utf8
 			",
 
-			'log_link_visit_action' => "CREATE TABLE {$prefixTables}log_link_visit_action (
-											  idlink_va INTEGER(11) NOT NULL AUTO_INCREMENT,
+            'log_link_visit_action' => "CREATE TABLE {$prefixTables}log_link_visit_action (
+											  idlink_va INTEGER(11) UNSIGNED NOT NULL AUTO_INCREMENT,
 									          idsite int(10) UNSIGNED NOT NULL,
 									  		  idvisitor BINARY(8) NOT NULL,
 									          server_time DATETIME NOT NULL,
 											  idvisit INTEGER(10) UNSIGNED NOT NULL,
-											  idaction_url INTEGER(10) UNSIGNED NOT NULL,
-											  idaction_url_ref INTEGER(10) UNSIGNED NOT NULL,
+											  idaction_url INTEGER(10) UNSIGNED DEFAULT NULL,
+											  idaction_url_ref INTEGER(10) UNSIGNED NULL DEFAULT 0,
 											  idaction_name INTEGER(10) UNSIGNED,
 											  idaction_name_ref INTEGER(10) UNSIGNED NOT NULL,
 											  time_spent_ref_action INTEGER(10) UNSIGNED NOT NULL,
-											  custom_var_k1 VARCHAR(100) DEFAULT NULL,
-											  custom_var_v1 VARCHAR(100) DEFAULT NULL,
-											  custom_var_k2 VARCHAR(100) DEFAULT NULL,
-											  custom_var_v2 VARCHAR(100) DEFAULT NULL,
-											  custom_var_k3 VARCHAR(100) DEFAULT NULL,
-											  custom_var_v3 VARCHAR(100) DEFAULT NULL,
-											  custom_var_k4 VARCHAR(100) DEFAULT NULL,
-											  custom_var_v4 VARCHAR(100) DEFAULT NULL,
-											  custom_var_k5 VARCHAR(100) DEFAULT NULL,
-											  custom_var_v5 VARCHAR(100) DEFAULT NULL,
+											  custom_var_k1 VARCHAR(200) DEFAULT NULL,
+											  custom_var_v1 VARCHAR(200) DEFAULT NULL,
+											  custom_var_k2 VARCHAR(200) DEFAULT NULL,
+											  custom_var_v2 VARCHAR(200) DEFAULT NULL,
+											  custom_var_k3 VARCHAR(200) DEFAULT NULL,
+											  custom_var_v3 VARCHAR(200) DEFAULT NULL,
+											  custom_var_k4 VARCHAR(200) DEFAULT NULL,
+											  custom_var_v4 VARCHAR(200) DEFAULT NULL,
+											  custom_var_k5 VARCHAR(200) DEFAULT NULL,
+											  custom_var_v5 VARCHAR(200) DEFAULT NULL,
+											  custom_float FLOAT NULL DEFAULT NULL,
 											  PRIMARY KEY(idlink_va),
 											  INDEX index_idvisit(idvisit),
 									          INDEX index_idsite_servertime ( idsite, server_time )
 											)  DEFAULT CHARSET=utf8
 			",
 
-			'log_profiling' => "CREATE TABLE {$prefixTables}log_profiling (
+            'log_profiling'         => "CREATE TABLE {$prefixTables}log_profiling (
 								  query TEXT NOT NULL,
 								  count INTEGER UNSIGNED NULL,
 								  sum_time_ms FLOAT NULL,
@@ -328,7 +344,7 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 								)  DEFAULT CHARSET=utf8
 			",
 
-			'option' => "CREATE TABLE `{$prefixTables}option` (
+            'option'                => "CREATE TABLE `{$prefixTables}option` (
 								option_name VARCHAR( 255 ) NOT NULL,
 								option_value LONGTEXT NOT NULL,
 								autoload TINYINT NOT NULL DEFAULT '1',
@@ -337,7 +353,7 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 								)  DEFAULT CHARSET=utf8
 			",
 
-			'session' => "CREATE TABLE {$prefixTables}session (
+            'session'               => "CREATE TABLE {$prefixTables}session (
 								id CHAR(32) NOT NULL,
 								modified INTEGER,
 								lifetime INTEGER,
@@ -346,7 +362,7 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 								)  DEFAULT CHARSET=utf8
 			",
 
-			'archive_numeric'	=> "CREATE TABLE {$prefixTables}archive_numeric (
+            'archive_numeric'       => "CREATE TABLE {$prefixTables}archive_numeric (
 									  idarchive INTEGER UNSIGNED NOT NULL,
 									  name VARCHAR(255) NOT NULL,
 									  idsite INTEGER UNSIGNED NULL,
@@ -354,14 +370,14 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 								  	  date2 DATE NULL,
 									  period TINYINT UNSIGNED NULL,
 								  	  ts_archived DATETIME NULL,
-								  	  value FLOAT NULL,
+								  	  value DOUBLE NULL,
 									  PRIMARY KEY(idarchive, name),
 									  INDEX index_idsite_dates_period(idsite, date1, date2, period, ts_archived),
 									  INDEX index_period_archived(period, ts_archived)
 									)  DEFAULT CHARSET=utf8
 			",
 
-			'archive_blob'	=> "CREATE TABLE {$prefixTables}archive_blob (
+            'archive_blob'          => "CREATE TABLE {$prefixTables}archive_blob (
 									  idarchive INTEGER UNSIGNED NOT NULL,
 									  name VARCHAR(255) NOT NULL,
 									  idsite INTEGER UNSIGNED NULL,
@@ -374,192 +390,183 @@ class Piwik_Db_Schema_Myisam implements Piwik_Db_Schema_Interface
 									  INDEX index_period_archived(period, ts_archived)
 									)  DEFAULT CHARSET=utf8
 			",
-		);
-		return $tables;
-	}
+        );
+        return $tables;
+    }
 
-	/**
-	 * Get the SQL to create a specific Piwik table
-	 *
-	 * @param string $tableName
-	 * @return string SQL
-	 */
-	public function getTableCreateSql( $tableName )
-	{
-		$tables = Piwik::getTablesCreateSql();
+    /**
+     * Get the SQL to create a specific Piwik table
+     *
+     * @param string $tableName
+     * @throws Exception
+     * @return string  SQL
+     */
+    public function getTableCreateSql($tableName)
+    {
+        $tables = Piwik::getTablesCreateSql();
 
-		if(!isset($tables[$tableName]))
-		{
-			throw new Exception("The table '$tableName' SQL creation code couldn't be found.");
-		}
+        if (!isset($tables[$tableName])) {
+            throw new Exception("The table '$tableName' SQL creation code couldn't be found.");
+        }
 
-		return $tables[$tableName];
-	}
+        return $tables[$tableName];
+    }
 
-	/**
-	 * Names of all the prefixed tables in piwik
-	 * Doesn't use the DB
-	 *
-	 * @return array Table names
-	 */
-	public function getTablesNames()
-	{
-		$aTables = array_keys($this->getTablesCreateSql());
-		$config = Zend_Registry::get('config');
-		$prefixTables = $config->database->tables_prefix;
-		$return = array();
-		foreach($aTables as $table)
-		{
-			$return[] = $prefixTables.$table;
-		}
-		return $return;
-	}
+    /**
+     * Names of all the prefixed tables in piwik
+     * Doesn't use the DB
+     *
+     * @return array  Table names
+     */
+    public function getTablesNames()
+    {
+        $aTables = array_keys($this->getTablesCreateSql());
+        $config = Piwik_Config::getInstance();
+        $prefixTables = $config->database['tables_prefix'];
+        $return = array();
+        foreach ($aTables as $table) {
+            $return[] = $prefixTables . $table;
+        }
+        return $return;
+    }
 
-	private $tablesInstalled = null;
+    private $tablesInstalled = null;
 
-	/**
-	 * Get list of tables installed
-	 *
-	 * @param bool $forceReload Invalidate cache
-	 * @param string $idSite
-	 * @return array Tables installed
-	 */
-	public function getTablesInstalled($forceReload = true)
-	{
-		if(is_null($this->tablesInstalled)
-			|| $forceReload === true)
-		{
-			$db = Zend_Registry::get('db');
-			$config = Zend_Registry::get('config');
-			$prefixTables = $config->database->tables_prefix;
+    /**
+     * Get list of tables installed
+     *
+     * @param bool $forceReload  Invalidate cache
+     * @return array  installed Tables
+     */
+    public function getTablesInstalled($forceReload = true)
+    {
+        if (is_null($this->tablesInstalled)
+            || $forceReload === true
+        ) {
+            $db = Zend_Registry::get('db');
+            $config = Piwik_Config::getInstance();
+            $prefixTables = $config->database['tables_prefix'];
 
-			// '_' matches any character; force it to be literal
-			$prefixTables = str_replace('_', '\_', $prefixTables);
+            // '_' matches any character; force it to be literal
+            $prefixTables = str_replace('_', '\_', $prefixTables);
 
-			$allTables = $db->fetchCol("SHOW TABLES LIKE '".$prefixTables."%'");
+            $allTables = $db->fetchCol("SHOW TABLES LIKE '" . $prefixTables . "%'");
 
-			// all the tables to be installed
-			$allMyTables = $this->getTablesNames();
+            // all the tables to be installed
+            $allMyTables = $this->getTablesNames();
 
-			// we get the intersection between all the tables in the DB and the tables to be installed
-			$tablesInstalled = array_intersect($allMyTables, $allTables);
+            // we get the intersection between all the tables in the DB and the tables to be installed
+            $tablesInstalled = array_intersect($allMyTables, $allTables);
 
-			// at this point we have only the piwik tables which is good
-			// but we still miss the piwik generated tables (using the class Piwik_TablePartitioning)
-			$allArchiveNumeric = $db->fetchCol("SHOW TABLES LIKE '".$prefixTables."archive_numeric%'");
-			$allArchiveBlob = $db->fetchCol("SHOW TABLES LIKE '".$prefixTables."archive_blob%'");
+            // at this point we have only the piwik tables which is good
+            // but we still miss the piwik generated tables (using the class Piwik_TablePartitioning)
+            $allArchiveNumeric = $db->fetchCol("SHOW TABLES LIKE '" . $prefixTables . "archive_numeric%'");
+            $allArchiveBlob = $db->fetchCol("SHOW TABLES LIKE '" . $prefixTables . "archive_blob%'");
 
-			$allTablesReallyInstalled = array_merge($tablesInstalled, $allArchiveNumeric, $allArchiveBlob);
+            $allTablesReallyInstalled = array_merge($tablesInstalled, $allArchiveNumeric, $allArchiveBlob);
 
-			$this->tablesInstalled = $allTablesReallyInstalled;
-		}
-		return 	$this->tablesInstalled;
-	}
+            $this->tablesInstalled = $allTablesReallyInstalled;
+        }
+        return $this->tablesInstalled;
+    }
 
-	/**
-	 * Do tables exist?
-	 *
-	 * @return bool True if tables exist; false otherwise
-	 */
-	public function hasTables()
-	{
-		return count($this->getTablesInstalled()) != 0;
-	}
+    /**
+     * Checks whether any table exists
+     *
+     * @return bool  True if tables exist; false otherwise
+     */
+    public function hasTables()
+    {
+        return count($this->getTablesInstalled()) != 0;
+    }
 
-	/**
-	 * Create database
-	 *
-	 * @param string $dbName
-	 */
-	public function createDatabase( $dbName = null )
-	{
-		if(is_null($dbName))
-		{
-			$dbName = Zend_Registry::get('config')->database->dbname;
-		}
-		Piwik_Exec("CREATE DATABASE IF NOT EXISTS ".$dbName." DEFAULT CHARACTER SET utf8");
-	}
+    /**
+     * Create database
+     *
+     * @param string $dbName  Name of the database to create
+     */
+    public function createDatabase($dbName = null)
+    {
+        if (is_null($dbName)) {
+            $dbName = Piwik_Config::getInstance()->database['dbname'];
+        }
+        Piwik_Exec("CREATE DATABASE IF NOT EXISTS " . $dbName . " DEFAULT CHARACTER SET utf8");
+    }
 
-	/**
-	 * Drop database
-	 */
-	public function dropDatabase()
-	{
-		$dbName = Zend_Registry::get('config')->database->dbname;
-		Piwik_Exec("DROP DATABASE IF EXISTS " . $dbName);
+    /**
+     * Drop database
+     */
+    public function dropDatabase()
+    {
+        $dbName = Piwik_Config::getInstance()->database['dbname'];
+        Piwik_Exec("DROP DATABASE IF EXISTS " . $dbName);
+    }
 
-	}
+    /**
+     * Create all tables
+     */
+    public function createTables()
+    {
+        $db = Zend_Registry::get('db');
+        $config = Piwik_Config::getInstance();
+        $prefixTables = $config->database['tables_prefix'];
 
-	/**
-	 * Create all tables
-	 */
-	public function createTables()
-	{
-		$db = Zend_Registry::get('db');
-		$config = Zend_Registry::get('config');
-		$prefixTables = $config->database->tables_prefix;
+        $tablesAlreadyInstalled = $this->getTablesInstalled();
+        $tablesToCreate = $this->getTablesCreateSql();
+        unset($tablesToCreate['archive_blob']);
+        unset($tablesToCreate['archive_numeric']);
 
-		$tablesAlreadyInstalled = $this->getTablesInstalled();
-		$tablesToCreate = $this->getTablesCreateSql();
-		unset($tablesToCreate['archive_blob']);
-		unset($tablesToCreate['archive_numeric']);
+        foreach ($tablesToCreate as $tableName => $tableSql) {
+            $tableName = $prefixTables . $tableName;
+            if (!in_array($tableName, $tablesAlreadyInstalled)) {
+                $db->query($tableSql);
+            }
+        }
+    }
 
-		foreach($tablesToCreate as $tableName => $tableSql)
-		{
-			$tableName = $prefixTables . $tableName;
-			if(!in_array($tableName, $tablesAlreadyInstalled))
-			{
-				$db->query( $tableSql );
-			}
-		}
-	}
+    /**
+     * Creates an entry in the User table for the "anonymous" user.
+     */
+    public function createAnonymousUser()
+    {
+        // The anonymous user is the user that is assigned by default
+        // note that the token_auth value is anonymous, which is assigned by default as well in the Login plugin
+        $db = Zend_Registry::get('db');
+        $db->query("INSERT INTO " . Piwik_Common::prefixTable("user") . "
+					VALUES ( 'anonymous', '', 'anonymous', 'anonymous@example.org', 'anonymous', '" . Piwik_Date::factory('now')->getDatetime() . "' );");
+    }
 
-	/**
-	 * Creates an entry in the User table for the "anonymous" user.
-	 */
-	public function createAnonymousUser()
-	{
-		// The anonymous user is the user that is assigned by default
-		// note that the token_auth value is anonymous, which is assigned by default as well in the Login plugin
-		$db = Zend_Registry::get('db');
-		$db->query("INSERT INTO ". Piwik_Common::prefixTable("user") . "
-					VALUES ( 'anonymous', '', 'anonymous', 'anonymous@example.org', 'anonymous', '".Piwik_Date::factory('now')->getDatetime()."' );" );
-	}
+    /**
+     * Truncate all tables
+     */
+    public function truncateAllTables()
+    {
+        $tablesAlreadyInstalled = $this->getTablesInstalled($forceReload = true);
+        foreach ($tablesAlreadyInstalled as $table) {
+            Piwik_Query("TRUNCATE `$table`");
+        }
+    }
 
-	/**
-	 * Truncate all tables
-	 */
-	public function truncateAllTables()
-	{
-		$tablesAlreadyInstalled = $this->getTablesInstalled($forceReload = true);
-		foreach($tablesAlreadyInstalled as $table)
-		{
-			Piwik_Query("TRUNCATE `$table`");
-		}
-	}
+    /**
+     * Drop specific tables
+     *
+     * @param array $doNotDelete  Names of tables to not delete
+     */
+    public function dropTables($doNotDelete = array())
+    {
+        $tablesAlreadyInstalled = $this->getTablesInstalled();
+        $db = Zend_Registry::get('db');
 
-	/**
-	 * Drop specific tables
-	 *
-	 * @param array $doNotDelete Names of tables to not delete
-	 */
-	public function dropTables( $doNotDelete = array() )
-	{
-		$tablesAlreadyInstalled = $this->getTablesInstalled();
-		$db = Zend_Registry::get('db');
+        $doNotDeletePattern = '/(' . implode('|', $doNotDelete) . ')/';
 
-		$doNotDeletePattern = '/('.implode('|',$doNotDelete).')/';
-
-		foreach($tablesAlreadyInstalled as $tableName)
-		{
-			if( count($doNotDelete) == 0
-				|| (!in_array($tableName,$doNotDelete)
-					&& !preg_match($doNotDeletePattern,$tableName)
-					)
-				)
-			{
-				$db->query("DROP TABLE `$tableName`");
-			}
-		}
-	}
+        foreach ($tablesAlreadyInstalled as $tableName) {
+            if (count($doNotDelete) == 0
+                || (!in_array($tableName, $doNotDelete)
+                    && !preg_match($doNotDeletePattern, $tableName)
+                )
+            ) {
+                $db->query("DROP TABLE `$tableName`");
+            }
+        }
+    }
 }

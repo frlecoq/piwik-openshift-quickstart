@@ -5,126 +5,155 @@
  * @license http://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
  */
 
-function formSetEditReport(idReport)
-{
-	var report = { 	"description":"", 
-					"period":"week",
-					"email_me":"1",
-					"additional_emails":"",
-					"reports":[]
-	};
-				
-	if(idReport > 0)
-	{
-		report = piwik.PDFReports[idReport];
-	}
-	$('#report_description').html(report.description);
-	$('#report_period option[value='+report.period+']').attr('selected', 'selected');
-	$('#report_format option[value='+report.format+']').attr('selected', 'selected');
-	if(report.email_me == 1)
-	{
-		$('#report_email_me').attr('checked','checked');
-	}
-	$('#report_additional_emails').text(report.additional_emails);
-	
-	$('#reportsList input').attr('checked', false);
+var getReportParametersFunctions = Object();
+var updateReportParametersFunctions = Object();
+var resetReportParametersFunctions = Object();
 
-	var key;
-	for(key in report.reports)
-	{
-		$('#'+report.reports[key]).attr('checked','checked');
-	}
-	$('#report_idreport').attr('value', idReport);
-	$('#report_submit').attr('value', piwik.updateReportString);
+function formSetEditReport(idReport) {
+    var report = {
+        'type': ReportPlugin.defaultReportType,
+        'format': ReportPlugin.defaultReportFormat,
+        'description': '',
+        'period': ReportPlugin.defaultPeriod,
+        'hour': ReportPlugin.defaultHour,
+        'reports': []
+    };
+
+    if (idReport > 0) {
+        report = ReportPlugin.reportList[idReport];
+        $('#report_submit').val(ReportPlugin.updateReportString);
+    }
+    else {
+        $('#report_submit').val(ReportPlugin.createReportString);
+    }
+
+    toggleReportType(report.type);
+
+    $('#report_description').html(report.description);
+    $('#report_segment').find('option[value=' + report.idsegment + ']').prop('selected', 'selected');
+    $('#report_type').find('option[value=' + report.type + ']').prop('selected', 'selected');
+    $('#report_period').find('option[value=' + report.period + ']').prop('selected', 'selected');
+    $('#report_hour').val(report.hour);
+    $('[name=report_format].' + report.type + ' option[value=' + report.format + ']').prop('selected', 'selected');
+
+    $('[name=reportsList] input').prop('checked', false);
+
+    var key;
+    for (key in report.reports) {
+        $('.' + report.type + ' [report-unique-id=' + report.reports[key] + ']').prop('checked', 'checked');
+    }
+
+    updateReportParametersFunctions[report.type](report.parameters);
+
+    $('#report_idreport').val(idReport);
 }
 
-function getPDFAjaxRequest(idReport, defaultApiMethod)
-{
-	var parameters = {};
-	piwikHelper.lazyScrollTo(".entityContainer", 400);
-	parameters.idSite = piwik.idSite;
-	parameters.module = 'API';
-	parameters.method = defaultApiMethod;
-	if(idReport == 0)
-	{
-		parameters.method =  'PDFReports.addReport';
-	}
-	parameters.format = 'json';
-	parameters.token_auth = piwik.token_auth;
-	return parameters;
+function getReportAjaxRequest(idReport, defaultApiMethod) {
+    var parameters = {};
+    piwikHelper.lazyScrollTo(".entityContainer", 400);
+    parameters.module = 'API';
+    parameters.method = defaultApiMethod;
+    if (idReport == 0) {
+        parameters.method = 'PDFReports.addReport';
+    }
+    parameters.format = 'json';
+    return parameters;
 }
 
-function initManagePdf()
-{
-	// Click Add/Update Submit 
-	$('#addEditReport').submit( function() {
-		idReport = $('#report_idreport').attr('value');
-		parameters = getPDFAjaxRequest(idReport, 'PDFReports.updateReport');
-		parameters.idReport = idReport;
-		parameters.description = encodeURIComponent($('#report_description').val());
-		parameters.period = $('#report_period option:selected').attr('value');
-		parameters.reportFormat = $('#report_format option:selected').attr('value');
-		parameters.emailMe = $('#report_email_me').attr('checked') == true ? 1: 0;
-		additionalEmails = $('#report_additional_emails').val();
-		parameters.additionalEmails = piwikHelper.getApiFormatTextarea(additionalEmails);
-		reports = '';
-		$('#reportsList input:checked').each(function() {
-			reports += $(this).attr('id') + ',';
-		});
-		parameters.reports = reports;
+function toggleReportType(reportType) {
+    resetReportParametersFunctions[reportType]();
+    $('#report_type').find('option').each(function (index, type) {
+        $('.' + $(type).val()).hide();
+    });
+    $('.' + reportType).show();
+}
 
-		var ajaxRequest = piwikHelper.getStandardAjaxConf();
-		ajaxRequest.type = 'POST';
-		ajaxRequest.data = parameters;
-		$.ajax( ajaxRequest );
-		return false;
-	});
-	
-	// Email now
-	$('a[name=linkEmailNow]').click(function(){
-		var idReport = $(this).attr('idreport');
-		var ajaxRequest = piwikHelper.getStandardAjaxConf();
-		ajaxRequest.type = 'POST';
-		parameters = getPDFAjaxRequest(idReport, 'PDFReports.sendEmailReport');
-		parameters.idReport = idReport;
-		ajaxRequest.data = parameters;
-		$.ajax( ajaxRequest );
-	});
-	
-	// Delete PDF
-	$('a[name=linkDeleteReport]').click(function(){
-		var idReport = $(this).attr('id');
-		function onDelete()
-		{
-			var ajaxRequest = piwikHelper.getStandardAjaxConf();
-			ajaxRequest.type = 'POST';
-			parameters = getPDFAjaxRequest(idReport, 'PDFReports.deleteReport');
-			parameters.idReport = idReport;
-			ajaxRequest.data = parameters;
-			$.ajax( ajaxRequest );
-		}
-		piwikHelper.windowModal( '#confirm', onDelete);
-	});
+function initManagePdf() {
+    // Click Add/Update Submit
+    $('#addEditReport').submit(function () {
+        var idReport = $('#report_idreport').val();
+        var apiParameters = getReportAjaxRequest(idReport, 'PDFReports.updateReport');
+        apiParameters.idReport = idReport;
+        apiParameters.description = $('#report_description').val();
+        apiParameters.idSegment = $('#report_segment').find('option:selected').val();
+        apiParameters.reportType = $('#report_type').find('option:selected').val();
+        apiParameters.reportFormat = $('[name=report_format].' + apiParameters.reportType + ' option:selected').val();
 
-	// Edit Report click
-	$('a[name=linkEditReport]').click(function(){
-		var idReport = $(this).attr('id');
-		formSetEditReport( idReport );
-		$('.entityAddContainer').show();
-		$('#entityEditContainer').hide();
-	});	
-	
-	// Add a Report click
-	$('#linkAddReport').click(function(){
-		$('.entityAddContainer').show();
-		$('#entityEditContainer').hide();
-		formSetEditReport( idReport = 0 );
-	});
-	
-	// Cancel click
-	$('.entityCancelLink').click(function(){
-		$('.entityAddContainer').hide();
-		$('#entityEditContainer').show();
-		piwikHelper.hideAjaxError();
-	}).click();
+        var reports = [];
+        $('[name=reportsList].' + apiParameters.reportType + ' input:checked').each(function () {
+            reports.push($(this).attr('report-unique-id'));
+        });
+        if (reports.length > 0) {
+            apiParameters.reports = reports;
+        }
+
+        apiParameters.parameters = getReportParametersFunctions[apiParameters.reportType]();
+
+        var ajaxHandler = new ajaxHelper();
+        ajaxHandler.addParams(apiParameters, 'POST');
+        ajaxHandler.addParams({period: $('#report_period').find('option:selected').val()}, 'GET');
+        ajaxHandler.addParams({hour: $('#report_hour').val()}, 'GET');
+        ajaxHandler.redirectOnSuccess();
+        ajaxHandler.setLoadingElement();
+        ajaxHandler.send(true);
+        return false;
+    });
+
+    // Email now
+    $('a[name=linkSendNow]').click(function () {
+        var idReport = $(this).attr('idreport');
+        var parameters = getReportAjaxRequest(idReport, 'PDFReports.sendReport');
+        parameters.idReport = idReport;
+
+        var ajaxHandler = new ajaxHelper();
+        ajaxHandler.addParams(parameters, 'POST');
+        ajaxHandler.setLoadingElement();
+        ajaxHandler.send(true);
+    });
+
+    // Delete Report
+    $('a[name=linkDeleteReport]').click(function () {
+        var idReport = $(this).attr('id');
+
+        function onDelete() {
+            var parameters = getReportAjaxRequest(idReport, 'PDFReports.deleteReport');
+            parameters.idReport = idReport;
+
+            var ajaxHandler = new ajaxHelper();
+            ajaxHandler.addParams(parameters, 'POST');
+            ajaxHandler.redirectOnSuccess();
+            ajaxHandler.setLoadingElement();
+            ajaxHandler.send(true);
+        }
+
+        piwikHelper.modalConfirm('#confirm', {yes: onDelete});
+    });
+
+    // Edit Report click
+    $('a[name=linkEditReport]').click(function () {
+        var idReport = $(this).attr('id');
+        formSetEditReport(idReport);
+        $('.entityAddContainer').show();
+        $('#entityEditContainer').hide();
+    });
+
+    // Switch Report Type
+    $('#report_type').change(function () {
+        var reportType = $(this).val();
+        toggleReportType(reportType);
+    });
+
+    // Add a Report click
+    $('#linkAddReport').click(function () {
+        $('.entityAddContainer').show();
+        $('#entityEditContainer').hide();
+        formSetEditReport(/*idReport = */0);
+    });
+
+    // Cancel click
+    $('.entityCancelLink').click(function () {
+        $('.entityAddContainer').hide();
+        $('#entityEditContainer').show();
+        piwikHelper.hideAjaxError();
+    }).click();
 }

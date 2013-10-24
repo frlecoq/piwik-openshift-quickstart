@@ -1,11 +1,10 @@
 <?php
 /**
  * Piwik - Open source web analytics
- * 
+ *
  * @link http://piwik.org
  * @license http://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
- * @version $Id: block.purify.php 4299 2011-04-03 20:32:34Z vipsoft $
- * 
+ *
  * @category Piwik
  * @package SmartyPlugins
  */
@@ -32,28 +31,25 @@
  */
 function smarty_block_purify($params, $content, &$smarty)
 {
-	if (is_null($content))
-	{
-		return;
-	}
+    if (is_null($content)) {
+        return;
+    }
 
-	$assign = null;
+    $assign = null;
 
-	foreach ($params as $_key => $_val)
-	{
-		switch ($_key)
-		{
-			case 'assign':
-				$$_key = (string)$_val;
-				break;
+    foreach ($params as $_key => $_val) {
+        switch ($_key) {
+            case 'assign':
+                $$_key = (string)$_val;
+                break;
 
-			default:
-				$smarty->trigger_error("purify: unknown attribute '$_key'");
-		}
-	}
+            default:
+                $smarty->trigger_error("purify: unknown attribute '$_key'");
+        }
+    }
 
-	$purifier = Piwik_HTMLPurifier::getInstance();
-	$output = $purifier->purify($content);
+    $purifier = Piwik_HTMLPurifier::getInstance();
+    $output = $purifier->purify($content);
 
-	return $assign ? $smarty->assign($assign, $output) : $output;
+    return $assign ? $smarty->assign($assign, $output) : $output;
 }

@@ -5,82 +5,90 @@
  * @license http://www.gnu.org/licenses/gpl-3.0.html GPL v3 or later
  */
 
-function getUserSettingsAJAX()
-{
-	var params;
-	var defaultDate = $('input[name=defaultDate]:checked').val();
-	if(defaultDate == 'today' || defaultDate == 'yesterday') {
-		params = 'period=day&date='+defaultDate;
-	} else if(defaultDate.indexOf('last') >= 0 
-				|| defaultDate.indexOf('previous') >= 0) {
-		params = 'period=range&date='+defaultDate;
-	} else {
-		params = 'date=today&period='+defaultDate;
-	}
+function sendUserSettingsAJAX() {
+    var params;
+    var defaultDate = $('input[name=defaultDate]:checked').val();
+    if (defaultDate == 'today' || defaultDate == 'yesterday') {
+        params = 'period=day&date=' + defaultDate;
+    } else if (defaultDate.indexOf('last') >= 0
+        || defaultDate.indexOf('previous') >= 0) {
+        params = 'period=range&date=' + defaultDate;
+    } else {
+        params = 'date=today&period=' + defaultDate;
+    }
 
-	var ajaxRequest = piwikHelper.getStandardAjaxConf('ajaxLoadingUserSettings', 'ajaxErrorUserSettings', params);
-	var alias = encodeURIComponent( $('#alias').val() );
-	var email = encodeURIComponent( $('#email').val() );
-	var password = encodeURIComponent( $('#password').val() );
-	var passwordBis = encodeURIComponent( $('#passwordBis').val() );
-	var defaultReport = $('input[name=defaultReport]:checked').val();
-	if(defaultReport == 1) {
-		defaultReport = $('#defaultReportWebsite option:selected').val();
-	}
-	var request = '';
-	request += 'module=UsersManager';
-	request += '&action=recordUserSettings';
-	request += '&format=json';
-	request += '&alias='+alias;
-	request += '&email='+email;
-	request += '&password='+password;
-	request += '&passwordBis='+passwordBis;
-	request += '&defaultReport='+defaultReport;
-	request += '&defaultDate='+defaultDate;
- 	request += '&token_auth=' + piwik.token_auth;
+    var alias = $('#alias').val();
+    var email = $('#email').val();
+    var password = $('#password').val();
+    var passwordBis = $('#passwordBis').val();
+    var defaultReport = $('input[name=defaultReport]:checked').val();
+    if (defaultReport == 1) {
+        defaultReport = $('#defaultReportSiteSelector').find('.custom_select_main_link').attr('siteid');
+    }
+    var postParams = {};
+    postParams.alias = alias;
+    postParams.email = email;
+    if (password) {
+        postParams.password = password;
+    }
+    if (passwordBis) {
+        postParams.passwordBis = passwordBis;
+    }
+    postParams.defaultReport = defaultReport;
+    postParams.defaultDate = defaultDate;
 
-	ajaxRequest.data = request;
-	return ajaxRequest;
+    var ajaxHandler = new ajaxHelper();
+    ajaxHandler.addParams({
+        module: 'UsersManager',
+        format: 'json',
+        action: 'recordUserSettings'
+    }, 'GET');
+    ajaxHandler.addParams(postParams, 'POST');
+    ajaxHandler.redirectOnSuccess(params);
+    ajaxHandler.setLoadingElement('#ajaxLoadingUserSettings');
+    ajaxHandler.setErrorElement('#ajaxErrorUserSettings');
+    ajaxHandler.send(true);
 }
-function getAnonymousUserSettingsAJAX()
-{
-	var ajaxRequest = piwikHelper.getStandardAjaxConf('ajaxLoadingAnonymousUserSettings', 'ajaxErrorAnonymousUserSettings');
-	var anonymousDefaultReport = $('input[name=anonymousDefaultReport]:checked').val();
-	if(anonymousDefaultReport == 1) {
-		anonymousDefaultReport = $('#anonymousDefaultReportWebsite option:selected').val();
-	}
-	var anonymousDefaultDate = $('input[name=anonymousDefaultDate]:checked').val();
-	var request = '';
-	request += 'module=UsersManager';
-	request += '&action=recordAnonymousUserSettings';
-	request += '&format=json';
-	request += '&anonymousDefaultReport='+anonymousDefaultReport;
-	request += '&anonymousDefaultDate='+anonymousDefaultDate;
- 	request += '&token_auth=' + piwik.token_auth;
-	ajaxRequest.data = request;
-	return ajaxRequest;
+function sendAnonymousUserSettingsAJAX() {
+    var anonymousDefaultReport = $('input[name=anonymousDefaultReport]:checked').val();
+    if (anonymousDefaultReport == 1) {
+        anonymousDefaultReport = $('#anonymousDefaultReportWebsite').find('option:selected').val();
+    }
+    var anonymousDefaultDate = $('input[name=anonymousDefaultDate]:checked').val();
+
+    var ajaxHandler = new ajaxHelper();
+    ajaxHandler.addParams({
+        module: 'UsersManager',
+        format: 'json',
+        action: 'recordAnonymousUserSettings'
+    }, 'GET');
+    ajaxHandler.addParams({
+        anonymousDefaultReport: anonymousDefaultReport,
+        anonymousDefaultDate: anonymousDefaultDate
+    }, 'POST');
+    ajaxHandler.redirectOnSuccess();
+    ajaxHandler.setLoadingElement('#ajaxLoadingAnonymousUserSettings');
+    ajaxHandler.setErrorElement('#ajaxErrorAnonymousUserSettings');
+    ajaxHandler.send(true);
 }
 
-$(document).ready( function() {
-	$('#userSettingsSubmit').click( function() {
-		var onValidate = function() {
-			$.ajax( getUserSettingsAJAX() );
-		}
-		if($('#password').val() != '') {
-			piwikHelper.windowModal( '#confirmPasswordChange', onValidate);
-		} else {
-			onValidate();
-		}
-		
-	});
-	$('#userSettingsTable input').keypress( function(e) {
-		var key=e.keyCode || e.which;
-		if (key==13) {
-		$('#userSettingsSubmit').click();
-	}});
-	
-	$('#anonymousUserSettingsSubmit').click( function() {
-		$.ajax( getAnonymousUserSettingsAJAX() );
-	});
+$(document).ready(function () {
+    $('#userSettingsSubmit').click(function () {
+        if ($('#password').length > 0 && $('#password').val() != '') {
+            piwikHelper.modalConfirm('#confirmPasswordChange', {yes: sendUserSettingsAJAX});
+        } else {
+            sendUserSettingsAJAX();
+        }
+
+    });
+    $('#userSettingsTable').find('input').keypress(function (e) {
+        var key = e.keyCode || e.which;
+        if (key == 13) {
+            $('#userSettingsSubmit').click();
+        }
+    });
+
+    $('#anonymousUserSettingsSubmit').click(function () {
+        sendAnonymousUserSettingsAJAX();
+    });
 });
-

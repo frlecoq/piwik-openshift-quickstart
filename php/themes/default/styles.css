@@ -7,8 +7,12 @@
     border: 1px solid #1F447F!important;
 }
 
+#languageSelection input, #languageSelection select {
+    display: none;
+}
+
 #languageSelection .ui-autocomplete-input {
-    background:#FFF url('images/sortdesc.png') no-repeat right center!important;
+    background:#FFF url(images/sortdesc.png) no-repeat right center!important;
     padding: 2px 18px 2px 4px;
     color:#255792!important;
     text-decoration: none;
@@ -31,15 +35,18 @@
 
 code {
 	background-color:#F6F9F9;
-	border-color:#3B3BB5;
-	border-style:dashed dashed dashed solid;
-	border-width:1px 1px 1px 5px;
+	border: 1px dashed;
+	border-left: 5px solid  #4B4BD5;
 	direction:ltr;
 	display:table;
 	font-size:100%;
-	margin:12px 2px 0px;
+	margin:12px 2px 0;
 	padding:5px 50px 5px 15px;
 	text-align:left;
 	line-height:1.3em;
 	font-family: "Courier New" Courier monospace;
+}
+
+pre.code-pre {
+	white-space:pre-wrap;
 }
